@@ -1,10 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
-	"fmt"
-	"io"
-	"os"
+	"log"
+
+	_ "github.com/lib/pq"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -17,58 +18,72 @@ type DataType struct {
 }
 
 func main() {
+	psqlURL := "user='youruser' password='yourpassword' dbname='yourdbname' sslmode='disable'" // set your own postgreSQL url
+	db, err := sql.Open("postgres", psqlURL)
+	checkerr(err)
+	createTableQuery := `
+    CREATE TABLE IF NOT EXISTS axisgtd (
+        todolist TEXT NOT NULL,
+        config TEXT NOT NULL,
+        time BIGINT NOT NULL
+    );`
+	_, err = db.Exec(createTableQuery)
+	checkerr(err)
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000/",
+		AllowOrigins: "http://localhost:3000/", //Custom set your axisgtd service url
 		AllowHeaders: "Origin,Content-Type,Accept",
 	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("index")
-	})
-
-	app.Get("/sync", func(c *fiber.Ctx) error {
-		f, err := os.Open("Data.json")
-		if err != nil {
-			return c.SendString("")
-		}
-		defer f.Close()
-		bytes, _ := io.ReadAll(f)
-		var rdata DataType
-		err = json.Unmarshal(bytes, &rdata)
-		if err != nil {
-			fmt.Println("Error decoding JSON:", err)
-			return c.SendString("")
-		}
-		return c.JSON(rdata)
+		return c.SendString("AxisGTD Sync")
 	})
 
 	app.Post("/sync", func(c *fiber.Ctx) error {
 		todo_data := new(DataType)
+		checkerr(err)
 		if err := c.BodyParser(todo_data); err != nil {
 			return err
 		}
-
-		data := DataType{
-			Todolist: todo_data.Todolist,
-			Config:   todo_data.Config,
-			Time:     todo_data.Time,
-		}
-		file, err := os.Create("Data.json")
-		if err != nil {
-			fmt.Println("Error creating file:", err)
-			return err
-		}
-		defer file.Close()
-		jsonData, _ := json.MarshalIndent(data, "", "    ")
-		_, err = file.Write(jsonData)
-		if err != nil {
-			fmt.Println("Error writing to file:", err)
-			return err
-		}
-		return c.SendString(todo_data.Todolist)
+		stmt, err := db.Prepare("INSERT INTO axisgtd (todolist,config,time) VALUES ($1,$2,$3)")
+		checkerr(err)
+		defer stmt.Close()
+		_, err = stmt.Exec(todo_data.Todolist, todo_data.Config, todo_data.Time)
+		checkerr(err)
+		return c.SendString("aaa")
 	})
 
+	app.Get("/sync", func(c *fiber.Ctx) error {
+		stmt, err := db.Query("SELECT * FROM axisgtd LIMIT 1")
+		checkerr(err)
+		for stmt.Next() {
+			var todolist string
+			var config string
+			var time int
+			err = stmt.Scan(&todolist, &config, &time)
+			checkerr(err)
+			data := DataType{
+				Todolist: todolist,
+				Config:   config,
+				Time:     time,
+			}
+			jsonData, _ := json.MarshalIndent(data, "", "    ")
+			return c.SendString(string(jsonData))
+		}
+		return c.SendString("")
+	})
+
+	// TODOList
+	// Manage sql data
+
 	app.Listen(":8080")
+}
+
+func checkerr(err error) {
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
