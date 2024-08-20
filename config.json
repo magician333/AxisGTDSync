@@ -1,0 +1,4 @@
+{
+  "psqlUrl": "user='youruser' password='yourpassword' dbname='yourdbname' sslmode='disable'",
+  "corsUrl": "https://www.axisgtd.work,http://localhost:3000/"
+}
