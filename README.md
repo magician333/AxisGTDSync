@@ -39,10 +39,13 @@ paste the domain name and ID into the Axisgtd synchronization page and you can u
 ## TodoList
 - [x] Use PostgreSQL
 - [x] Multi ID manage
-- [x] Front-end management page
+- [x] Front-end management data page
+- [x] Delete Data
+- [x] Delete ID
+- [ ] Front-end management ID page
 - [ ] ID status manage
-- [ ] Delete Data
 - [ ] Code optimization
+- [ ] Docker
   
 ## Other
 You can use Firebase, Supabase, Neon and other Serverless databases to get a good experience.

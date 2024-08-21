@@ -8,13 +8,14 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/lib/pq"
 )
 
-type DataType struct {
+type AxisGTDType struct {
 	Todolist string `json:"todolist"`
 	Config   string `json:"config"`
 	Time     int64  `json:"time"`
@@ -25,7 +26,7 @@ type UID struct {
 	Status bool   `json:"status"`
 }
 
-type DataJsonType struct {
+type AxisGTDJsonType struct {
 	Name     string `json:"name"`
 	Status   bool   `json:"status"`
 	Todolist string `json:"todolist"`
@@ -50,9 +51,17 @@ type IDSType struct {
 	Count  int    `json:"count"`
 }
 
-type Config struct {
-	psqlUrl string
-	corsUrl string
+func GetConfig() (psqlUrl string, corsUrl string) {
+	configPath := "./config.json"
+
+	content, err := ioutil.ReadFile(configPath)
+	checkerr(err)
+
+	var config map[string]string
+	err = json.Unmarshal(content, &config)
+	checkerr(err)
+
+	return config["psqlUrl"], config["corsUrl"]
 }
 
 func generateRandomHex(n int) (string, error) {
@@ -83,20 +92,78 @@ func getName(db *sql.DB) (string, error) {
 	return uidName, nil
 }
 
-func GetConfig() (psqlUrl string, corsUrl string) {
-	configPath := "./config.json"
-	// file, err := os.Open(configPath)
-	// checkerr(err)
-	// defer file.Close()
+func deleteRecord(db *sql.DB, uidName string, time int64) error {
+	query := `
+        DELETE FROM axisgtd
+        WHERE uid_name = $1 AND time = $2;
+    `
 
-	content, err := ioutil.ReadFile(configPath)
-	checkerr(err)
+	result, err := db.Exec(query, uidName, time)
+	if err != nil {
+		return err
+	}
 
-	var config map[string]string
-	err = json.Unmarshal(content, &config)
-	checkerr(err)
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-	return config["psqlUrl"], config["corsUrl"]
+	if affected == 0 {
+		return fmt.Errorf("no records found with uid_name %s and time %d", uidName, time)
+	}
+
+	return nil
+}
+
+func deleteUIDAndAxisGtdByUID(db *sql.DB, uidName string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+
+	deleteAxisGtdQuery := `
+        DELETE FROM axisgtd
+        WHERE uid_name = $1;
+    `
+	result, err := tx.Exec(deleteAxisGtdQuery, uidName)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error deleting from axisgtd: %v", err)
+	}
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error getting affected rows from axisgtd: %v", err)
+	}
+	if affectedRows == 0 {
+		tx.Rollback()
+		return fmt.Errorf("no axisgtd records found for uid_name %s", uidName)
+	}
+
+	deleteUIDQuery := `
+        DELETE FROM UID
+        WHERE name = $1;
+    `
+	result, err = tx.Exec(deleteUIDQuery, uidName)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error deleting from UID: %v", err)
+	}
+	affectedRows, err = result.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error getting affected rows from UID: %v", err)
+	}
+	if affectedRows == 0 {
+		tx.Rollback()
+		return fmt.Errorf("no UID record found for name %s", uidName)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return nil
 }
 
 func main() {
@@ -130,10 +197,8 @@ func main() {
 		uidName, err := getName(db)
 		checkerr(err)
 
-		stmt, err := db.Prepare("INSERT INTO UID (name,status) VALUES ($1,$2)")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(uidName, true)
+		query := `INSERT INTO UID (name,status) VALUES ($1,$2)`
+		_, err = db.Exec(query, uidName, true)
 		checkerr(err)
 
 		createDataTableQuery := `
@@ -170,10 +235,10 @@ func main() {
 		checkerr(err)
 		defer rows.Close()
 
-		var dataList []DataJsonType
+		var dataList []AxisGTDJsonType
 
 		for rows.Next() {
-			var axisgtd DataType
+			var axisgtd AxisGTDType
 			var uid UID
 			err := rows.Scan(&axisgtd.Todolist,
 				&axisgtd.Config,
@@ -182,17 +247,21 @@ func main() {
 				&uid.Status)
 			checkerr(err)
 			if uid.Status {
-				dataList = append(dataList, DataJsonType{
+				dataList = append(dataList, AxisGTDJsonType{
 					Todolist: axisgtd.Todolist,
 					Config:   axisgtd.Config,
 					Time:     axisgtd.Time,
 				})
-			}
-			if len(dataList) == 0 {
+				if len(dataList) == 0 {
+					return c.SendStatus(404)
+				}
+
+			} else {
 				return c.SendStatus(404)
 			}
 
 		}
+
 		jsonData, err := json.Marshal(dataList)
 		checkerr(err)
 		return c.JSON(string(jsonData))
@@ -233,34 +302,8 @@ func main() {
 		return c.JSON(string(jsonData))
 	})
 
-	app.Post("/sync/:name", func(c *fiber.Ctx) error {
-
-		var exists bool
-		query := "SELECT EXISTS(SELECT 1 FROM UID WHERE name = $1)"
-		err = db.QueryRow(query, c.Params("name")).Scan(&exists)
-		checkerr(err)
-		if !exists {
-			return c.SendStatus(404)
-		}
-
-		todo_data := new(DataType)
-		checkerr(err)
-		if err := c.BodyParser(todo_data); err != nil {
-			return err
-		}
-		stmt, err := db.Prepare("INSERT INTO axisgtd (todolist,config,time,uid_name) VALUES ($1,$2,$3,$4)")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(todo_data.Todolist, todo_data.Config, todo_data.Time, c.Params("name"))
-		checkerr(err)
-
-		return c.SendStatus(200)
-	})
-
 	app.Get("/sync/:name", func(c *fiber.Ctx) error {
-
-		rows, err := db.Query(`
-        SELECT 
+		query := `SELECT 
             axisgtd.*, 
             UID.name,
 			UID.status
@@ -274,13 +317,13 @@ func main() {
 			UID.name =$1
 		ORDER BY
 			time DESC
-		LIMIT 1;
-    `, c.Params("name"))
+		LIMIT 1;`
+		rows, err := db.Query(query, c.Params("name"))
 
 		checkerr(err)
 		defer rows.Close()
 		for rows.Next() {
-			var axisgtd DataType
+			var axisgtd AxisGTDType
 			var uid UID
 			err := rows.Scan(&axisgtd.Todolist,
 				&axisgtd.Config,
@@ -291,7 +334,7 @@ func main() {
 			checkerr(err)
 
 			if uid.Status {
-				data := DataJsonType{
+				data := AxisGTDJsonType{
 					Todolist: axisgtd.Todolist,
 					Config:   axisgtd.Config,
 					Time:     axisgtd.Time,
@@ -308,9 +351,53 @@ func main() {
 
 	})
 
-	app.Get("/delete/:name/:time", func(c *fiber.Ctx) error {
-		//Ready Todo
-		return c.SendString(c.Params("time"))
+	app.Post("/sync/:name", func(c *fiber.Ctx) error {
+
+		var exists bool
+		existsQuery := `SELECT EXISTS(SELECT 1 FROM UID WHERE name = $1)`
+		err = db.QueryRow(existsQuery, c.Params("name")).Scan(&exists)
+		checkerr(err)
+		if !exists {
+			return c.SendStatus(404)
+		}
+
+		var status bool
+		statusQuery := `SELECT status FROM uid WHERE name=$1`
+		err = db.QueryRow(statusQuery, c.Params("name")).Scan(&status)
+		checkerr(err)
+		if !status {
+			return c.SendStatus(404)
+		}
+
+		todo_data := new(AxisGTDType)
+		checkerr(err)
+		if err := c.BodyParser(todo_data); err != nil {
+			return err
+		}
+
+		query := `INSERT INTO axisgtd (todolist,config,time,uid_name) VALUES ($1,$2,$3,$4)`
+		_, err = db.Exec(query, todo_data.Todolist, todo_data.Config, todo_data.Time, c.Params("name"))
+		checkerr(err)
+
+		return c.SendStatus(200)
+	})
+
+	app.Delete("/delete/:name/:time", func(c *fiber.Ctx) error {
+		timeVal, err := strconv.ParseInt(c.Params("time"), 10, 64)
+		checkerr(err)
+		err = deleteRecord(db, c.Params("name"), timeVal)
+		if err != nil {
+			return c.SendStatus(404)
+		}
+		return c.SendStatus(200)
+	})
+
+	app.Delete("/uid/:name", func(c *fiber.Ctx) error {
+		err := deleteUIDAndAxisGtdByUID(db, c.Params("name"))
+		if err != nil {
+			return c.SendStatus(404)
+		}
+		return c.SendStatus(200)
 	})
 
 	err = app.Listen(":8080")
