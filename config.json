@@ -1,4 +1,4 @@
 {
-  "psqlUrl": "user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'",
-  "corsUrl": "https://www.axisgtd.work,http://localhost:3000/"
+  "psqlUrl": "postgresql://axisgtd_owner:Maqrm6b1GOgu@ep-jolly-boat-a17gokbj.ap-southeast-1.aws.neon.tech/axisgtd?sslmode=require",
+  "corsUrl": "https://www.axisgtd.work,http://localhost:3000/,http://127.0.0.1:8080"
 }

@@ -1,0 +1,304 @@
+basePath: /
+definitions:
+  main.AxisGTDJsonType:
+    properties:
+      config:
+        type: string
+      name:
+        type: string
+      status:
+        type: boolean
+      time:
+        type: integer
+      todolist:
+        type: string
+    type: object
+  main.AxisGTDType:
+    properties:
+      config:
+        type: string
+      time:
+        type: integer
+      todolist:
+        type: string
+      uidname:
+        type: string
+    type: object
+  main.IDSType:
+    properties:
+      count:
+        type: integer
+      name:
+        type: string
+      status:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: magician33333@gmail.com
+    name: API Support
+  description: API for synchronizing AxisGTD tasks and configurations.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: AxisGTD Sync API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Checks if the AxisGTD synchronization service is running.
+      produces:
+        - text/plain
+      responses:
+        "200":
+          description: AxisGTD synchronization service has been run successfully!
+          schema:
+            type: string
+      summary: Check service status
+      tags:
+        - index
+  /create:
+    get:
+      consumes:
+        - application/json
+      description:
+        Creates a new UID with a generated name and sets up the axisgtd
+        table.
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: Create ID successful! Your ID is {uidName}
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new UID and axisgtd table
+      tags:
+        - id
+  /delete/{name}/{time}:
+    delete:
+      consumes:
+        - application/json
+      description: Deletes a record from the database based on UID name and time.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+        - description: The record's time
+          in: path
+          name: time
+          required: true
+          type: integer
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: Record deleted successfully
+          schema:
+            type: string
+        "404":
+          description: Record not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a record by UID name and time
+      tags:
+        - delete
+  /id/{name}:
+    delete:
+      consumes:
+        - application/json
+      description: Deletes a UID and all associated axisgtd records from the database.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: UID and associated records deleted successfully
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a UID and associated axisgtd records
+      tags:
+        - id
+    get:
+      consumes:
+        - application/json
+      description:
+        Retrieves a list of AxisGTD records associated with the given UID
+        name.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: "#/definitions/main.AxisGTDJsonType"
+            type: array
+        "404":
+          description: No records found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get AxisGTD records by UID name
+      tags:
+        - id
+  /ids:
+    get:
+      consumes:
+        - application/json
+      description: Retrieves the count of axisgtd entries associated with each UID.
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: "#/definitions/main.IDSType"
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get counts of axisgtd per UID
+      tags:
+        - id
+  /status/{name}:
+    get:
+      consumes:
+        - application/json
+      description: Updates the status field of a UID to the opposite value.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: Status toggled successfully
+          schema:
+            type: string
+        "404":
+          description: UID not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Toggle the status of a UID
+      tags:
+        - status
+  /sync/{name}:
+    get:
+      consumes:
+        - application/json
+      description:
+        Retrieves the latest AxisGTD record associated with the specified
+        UID name, ordered by time in descending order.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: The latest AxisGTD record
+          schema:
+            $ref: "#/definitions/main.AxisGTDJsonType"
+        "404":
+          description: UID not found or no records available
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get the latest AxisGTD record by UID name
+      tags:
+        - sync
+    post:
+      consumes:
+        - application/json
+      description:
+        Inserts a new AxisGTD record into the database for the given UID
+        name.
+      parameters:
+        - description: UID Name
+          in: path
+          name: name
+          required: true
+          type: string
+        - description: AxisGTD record to create
+          in: body
+          name: todo_data
+          required: true
+          schema:
+            $ref: "#/definitions/main.AxisGTDType"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: Record created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "404":
+          description: UID not found or UID is disabled
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new AxisGTD record
+      tags:
+        - sync
+schemes:
+  - http
+securityDefinitions:
+  APIKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+swagger: "2.0"

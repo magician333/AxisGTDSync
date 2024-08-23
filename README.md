@@ -1,4 +1,4 @@
-![logo](./logo.png)
+![logo](/img/logo.png)
 ---
 AxisGTDSync is a sync server for [AxisGTD](https://github.com/magician333/AxisGTD), You can use this program to achieve multi-terminal synchronization of AxisGTD. Multiple IDs can achieve multi-user/multi-workspace synchronization.
 
@@ -25,15 +25,18 @@ For example, your domain name is **www.sync.app**
 
 Open the browser and view www.axisgtdsync.app, If you see the following page, it means the service is running successfully
 
-![success](/docs/success.png)
+![success](/img/success.png)
 
 Open www.sync.app/create, you will get an ID
 
-![create](/docs/create.png)
+![create](/img/create.png)
+
+Open www.sync.app/docs, you can use openAPI docs (swagger) to test
+![swagger](/img/swaggerui.png)
 
 paste the domain name and ID into the Axisgtd synchronization page and you can use it.
 
-![syncview](/docs/syncview.png)
+![syncview](/img/syncview.png)
 
 
 ## TodoList
@@ -42,8 +45,9 @@ paste the domain name and ID into the Axisgtd synchronization page and you can u
 - [x] Front-end management data page
 - [x] Delete Data
 - [x] Delete ID
+- [x] ID status manage
+- [x] Swagger API Docs
 - [ ] Front-end management ID page
-- [ ] ID status manage
 - [ ] Code optimization
 - [ ] Docker
   
