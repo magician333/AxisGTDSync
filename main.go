@@ -199,7 +199,7 @@ func deleteUIDAndAxisGtdByUID(uidName string) error {
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 //	@host			localhost:8080
-//	@BasePath		/
+//	@BasePath		/api
 //	@schemes		http
 
 //	@securityDefinitions.apikey	APIKeyAuth
@@ -214,13 +214,15 @@ func deleteUIDAndAxisGtdByUID(uidName string) error {
 // @scope.read					Read access
 func main() {
 	psqlUrl, corsUrl := GetConfig()
+
 	var err error
 	db, err = sql.Open("postgres", psqlUrl)
 	checkerr(err)
 	initDB()
 	app := fiber.New()
+	app.Get("/", Index)
 	app.Use(swagger.New(swagger.Config{
-		BasePath: "/",
+		BasePath: "/api",
 		FilePath: "./docs/swagger.json",
 		Path:     "docs",
 	}))
@@ -229,7 +231,6 @@ func main() {
 		AllowOrigins: corsUrl,
 		AllowHeaders: "Origin,Content-Type,Accept",
 	}))
-	app.Get("/", Index)
 
 	app.Get("/create", CreateID)
 

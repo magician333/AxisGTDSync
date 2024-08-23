@@ -11,30 +11,39 @@ AxisGTDSync is a sync server for [AxisGTD](https://github.com/magician333/AxisGT
 * [PostgreSQL](https://www.postgresql.org) A relatively stable SQL database for data security
 
 
-## How to use
+## How to use(manual)
 ```bash
 // Please make sure you already have golang running environment and enable PostgreSQL service
-git clone git@github.com:magician333/AxisGTDSync.git
+
+git clone https://github.com/magician333/AxisGTDSync.git
+
 cd AxisGTDSync
 
+go mod download
+
 // Edit config.json,replace the psqlUrl and corsUrl to your config
-go build main.go
+
+go build -o main .
+
 ./main
 ```
-For example, your domain name is **www.sync.app**
+For example, your domain is [*www.sync.app*]
 
-Open the browser and view www.axisgtdsync.app, If you see the following page, it means the service is running successfully
+
+> Open the browser and view [*www.sync.app*], If you see the following page, it means the service is running successfully
+
 
 ![success](/img/success.png)
 
-Open www.sync.app/create, you will get an ID
+> Open [*www.sync.app*]/create, you will get an ID
 
 ![create](/img/create.png)
 
-Open www.sync.app/docs, you can use openAPI docs (swagger) to test
+> Open [*www.sync.app*]/api/docs, you can use openAPI docs (swagger) to test
+> 
 ![swagger](/img/swaggerui.png)
 
-paste the domain name and ID into the Axisgtd synchronization page and you can use it.
+> Paste the domain name and ID into the Axisgtd synchronization page and you can use it.
 
 ![syncview](/img/syncview.png)
 
@@ -47,9 +56,9 @@ paste the domain name and ID into the Axisgtd synchronization page and you can u
 - [x] Delete ID
 - [x] ID status manage
 - [x] Swagger API Docs
+- [x] Docker
 - [ ] Front-end management ID page
 - [ ] Code optimization
-- [ ] Docker
   
 ## Other
 You can use Firebase, Supabase, Neon and other Serverless databases to get a good experience.
