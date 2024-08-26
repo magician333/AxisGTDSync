@@ -148,7 +148,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.AxisGTDJsonType"
+                                "$ref": "#/definitions/api.AxisGTDJsonType"
                             }
                         }
                     },
@@ -222,7 +222,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.IDSType"
+                                "$ref": "#/definitions/api.IDSType"
                             }
                         }
                     },
@@ -305,7 +305,7 @@
                     "200": {
                         "description": "The latest AxisGTD record",
                         "schema": {
-                            "$ref": "#/definitions/main.AxisGTDJsonType"
+                            "$ref": "#/definitions/api.AxisGTDJsonType"
                         }
                     },
                     "404": {
@@ -348,7 +348,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AxisGTDType"
+                            "$ref": "#/definitions/api.AxisGTDType"
                         }
                     }
                 ],
@@ -382,7 +382,7 @@
         }
     },
     "definitions": {
-        "main.AxisGTDJsonType": {
+        "api.AxisGTDJsonType": {
             "type": "object",
             "properties": {
                 "config": {
@@ -402,7 +402,7 @@
                 }
             }
         },
-        "main.AxisGTDType": {
+        "api.AxisGTDType": {
             "type": "object",
             "properties": {
                 "config": {
@@ -419,7 +419,7 @@
                 }
             }
         },
-        "main.IDSType": {
+        "api.IDSType": {
             "type": "object",
             "properties": {
                 "count": {

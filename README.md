@@ -21,12 +21,30 @@ cd AxisGTDSync
 
 go mod download
 
-// Edit config.json,replace the psqlUrl and corsUrl to your config
+//Set environment variables
+
+set psqlURL="user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'" //Here you need to set your postgresql url
+
+set corsURL = "???" //Optional. If you deploy it yourself, you need to set the URLs allowed by CORS and separate them with commas.
 
 go build -o main .
 
 ./main
 ```
+
+## How to use(docker)
+```bash
+git clone https://github.com/magician333/AxisGTDSync.git
+
+cd AxisGTDSync
+
+//If you deploy it yourself, you need to set the URLs allowed by CORS and separate them with commas.
+
+docker build --build-arg psqlURL="user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'" corsURL="?" -t axisgtdsync . //Here you need to set your postgresql url 
+
+docker run -e psqlURL="user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'" corsURL="?" -p 8080:8080 axisgtdsync
+```
+
 For example, your domain is [*www.sync.app*]
 
 
@@ -56,9 +74,9 @@ For example, your domain is [*www.sync.app*]
 - [x] Delete ID
 - [x] ID status manage
 - [x] Swagger API Docs
-- [x] Docker
+- [x] Docker deployment
+- [x] Code optimization
 - [ ] Front-end management ID page
-- [ ] Code optimization
   
 ## Other
 You can use Firebase, Supabase, Neon and other Serverless databases to get a good experience.

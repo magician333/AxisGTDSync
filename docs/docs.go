@@ -151,7 +151,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.AxisGTDJsonType"
+                                "$ref": "#/definitions/api.AxisGTDJsonType"
                             }
                         }
                     },
@@ -225,7 +225,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.IDSType"
+                                "$ref": "#/definitions/api.IDSType"
                             }
                         }
                     },
@@ -308,7 +308,7 @@ const docTemplate = `{
                     "200": {
                         "description": "The latest AxisGTD record",
                         "schema": {
-                            "$ref": "#/definitions/main.AxisGTDJsonType"
+                            "$ref": "#/definitions/api.AxisGTDJsonType"
                         }
                     },
                     "404": {
@@ -351,7 +351,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AxisGTDType"
+                            "$ref": "#/definitions/api.AxisGTDType"
                         }
                     }
                 ],
@@ -385,7 +385,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "main.AxisGTDJsonType": {
+        "api.AxisGTDJsonType": {
             "type": "object",
             "properties": {
                 "config": {
@@ -405,7 +405,7 @@ const docTemplate = `{
                 }
             }
         },
-        "main.AxisGTDType": {
+        "api.AxisGTDType": {
             "type": "object",
             "properties": {
                 "config": {
@@ -422,7 +422,7 @@ const docTemplate = `{
                 }
             }
         },
-        "main.IDSType": {
+        "api.IDSType": {
             "type": "object",
             "properties": {
                 "count": {

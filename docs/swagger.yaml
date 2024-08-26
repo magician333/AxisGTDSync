@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  main.AxisGTDJsonType:
+  api.AxisGTDJsonType:
     properties:
       config:
         type: string
@@ -13,7 +13,7 @@ definitions:
       todolist:
         type: string
     type: object
-  main.AxisGTDType:
+  api.AxisGTDType:
     properties:
       config:
         type: string
@@ -24,7 +24,7 @@ definitions:
       uidname:
         type: string
     type: object
-  main.IDSType:
+  api.IDSType:
     properties:
       count:
         type: integer
@@ -156,7 +156,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/main.AxisGTDJsonType'
+              $ref: '#/definitions/api.AxisGTDJsonType'
             type: array
         "404":
           description: No records found
@@ -181,7 +181,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/main.IDSType'
+              $ref: '#/definitions/api.IDSType'
             type: array
         "500":
           description: Internal server error
@@ -237,7 +237,7 @@ paths:
         "200":
           description: The latest AxisGTD record
           schema:
-            $ref: '#/definitions/main.AxisGTDJsonType'
+            $ref: '#/definitions/api.AxisGTDJsonType'
         "404":
           description: UID not found or no records available
           schema:
@@ -265,7 +265,7 @@ paths:
         name: todo_data
         required: true
         schema:
-          $ref: '#/definitions/main.AxisGTDType'
+          $ref: '#/definitions/api.AxisGTDType'
       produces:
       - application/json
       responses:
