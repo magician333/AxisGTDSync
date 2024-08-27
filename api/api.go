@@ -106,7 +106,7 @@ func GetID(c *fiber.Ctx) error {
 	}
 
 	if len(dataList) == 0 {
-		return c.SendStatus(404)
+		return c.Status(404).JSON(fiber.Map{"Error": "No records found"})
 	}
 
 	return c.JSON(dataList)
@@ -124,7 +124,7 @@ func GetID(c *fiber.Ctx) error {
 func DeleteID(c *fiber.Ctx) error {
 	err := DeleteUIDAndAxisGtdByUID(c.Params("name"))
 	checkerr(err)
-	return c.SendStatus(200)
+	return c.Status(200).JSON(fiber.Map{"Success": "UID and associated records deleted successfully"})
 }
 
 // @Summary		Get counts of axisgtd per UID
@@ -176,7 +176,7 @@ func ToggleStatus(c *fiber.Ctx) error {
 	searchQuery := `SELECT name, status FROM UID WHERE name = $1`
 	err := db.QueryRow(searchQuery, c.Params("name")).Scan(&uid.Name, &uid.Status)
 	if err != nil {
-		return c.SendStatus(404)
+		return c.Status(404).JSON(fiber.Map{"Error": "UID not found"})
 	}
 
 	uid.Status = !uid.Status
@@ -234,11 +234,11 @@ func SyncGet(c *fiber.Ctx) error {
 			}
 			return c.JSON(data)
 		} else {
-			return c.SendStatus(404)
+			return c.Status(404).JSON(fiber.Map{"Error": c.Params("name") + " not found"})
 		}
 
 	}
-	return c.SendStatus(404)
+	return c.Status(404).JSON(fiber.Map{"Error": "No records available"})
 
 }
 
@@ -261,7 +261,7 @@ func SyncPost(c *fiber.Ctx) error {
 	err := db.QueryRow(existsQuery, c.Params("name")).Scan(&exists)
 	checkerr(err)
 	if !exists {
-		return c.SendStatus(404)
+		return c.Status(404).JSON(fiber.Map{"Error": c.Params("name") + " not found"})
 	}
 
 	var status bool
@@ -269,7 +269,7 @@ func SyncPost(c *fiber.Ctx) error {
 	statusErr := db.QueryRow(statusQuery, c.Params("name")).Scan(&status)
 	checkerr(statusErr)
 	if !status {
-		return c.SendStatus(404)
+		return c.Status(404).JSON(fiber.Map{"Error": c.Params("name") + " is disabled"})
 	}
 
 	todo_data := new(AxisGTDType)
@@ -300,7 +300,7 @@ func DeleteRecord(c *fiber.Ctx) error {
 	checkerr(err)
 	err = DeleteDBRecord(c.Params("name"), timeVal)
 	if err != nil {
-		return c.SendStatus(404)
+		return c.Status(404).JSON(fiber.Map{"Error": "Record not found"})
 	}
 	return c.SendStatus(200)
 }

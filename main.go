@@ -17,7 +17,7 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 //	@host			localhost:8080
-//	@BasePath		/api
+//	@BasePath		/
 //	@schemes		http
 
 //	@securityDefinitions.apikey	APIKeyAuth
@@ -37,17 +37,12 @@ func main() {
 	api.InitDB()
 
 	app := fiber.New()
-	app.Get("/", api.Index)
-	app.Use(swagger.New(swagger.Config{
-		BasePath: "/api",
-		FilePath: "./docs/swagger.json",
-		Path:     "docs",
-	}))
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: corsUrl,
 		AllowHeaders: "Origin,Content-Type,Accept",
 	}))
+	app.Get("/", api.Index)
 
 	app.Get("/create", api.CreateID)
 
@@ -64,6 +59,12 @@ func main() {
 	app.Post("/sync/:name", api.SyncPost)
 
 	app.Delete("/delete/:name/:time", api.DeleteRecord)
+
+	app.Use(swagger.New(swagger.Config{
+		BasePath: "/",
+		FilePath: "./docs/swagger.json",
+		Path:     "docs",
+	}))
 
 	app.Listen(":8080")
 }

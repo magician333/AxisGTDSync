@@ -453,7 +453,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api",
+	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "AxisGTD Sync API",
 	Description:      "API for synchronizing AxisGTD tasks and configurations.",

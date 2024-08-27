@@ -23,9 +23,9 @@ go mod download
 
 //Set environment variables
 
-set psqlURL="user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'" //Here you need to set your postgresql url
+export psqlURL="user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'" //Here you need to set your postgresql url
 
-set corsURL = "???" //Optional. If you deploy it yourself, you need to set the URLs allowed by CORS and separate them with commas.
+export corsURL = "???" //Optional. If you deploy it yourself, you need to set the URLs allowed by CORS and separate them with commas.
 
 go build -o main .
 

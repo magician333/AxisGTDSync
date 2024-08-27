@@ -22,7 +22,7 @@ func GetConfig() (configData ConfigType) {
 
 	if config.PSQLURL == "" {
 		fmt.Println("Please set the environment variable psqlURL")
-		fmt.Println("e.g. set psqlURL=\"user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'\"")
+		fmt.Println("e.g. export psqlURL=\"user='youruser' password='yourpassword' dbname='yourdbname' sslmode='require'\"")
 		os.Exit(0)
 	}
 	return config
