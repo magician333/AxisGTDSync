@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AxisGTDSync Manage Page</title>
+    <script src="js/vue.global.js"></script>
+    <link rel="stylesheet" href="css/bulma.min.css">
+
+</head>
+
+<body>
+    <div id="app" class="is-flex is-justify-content-center">
+
+        <div class="has-text-centered card mt-6">
+
+            <div class="card-content is-flex is-justify-content-center">
+                <table class="table is-centered">
+                    <tr>
+                        <th class="has-text-centered">Index</th>
+                        <th class="has-text-centered">ID</th>
+                        <th class="has-text-centered">Status</th>
+                        <th class="has-text-centered">History</th>
+                        <th class="has-text-centered">Action</th>
+                    </tr>
+                    <tbody>
+                        <tr v-for="item in idList" :key="item.name">
+                            <td>
+                                <p>{{idList.indexOf(item)+1}}</p>
+                            </td>
+                            <td>
+                                <span
+                                    :class="{ 'is-success has-text-weight-bold has-text-white tag': item.status, 'is-danger has-text-weight-bold has-text-white tag': !item.status }">{{
+                                    item.name }}</span>
+                            </td>
+                            <td>
+                                <button @click="toggleStatus(item.name)" class="button is-small">
+                                    {{ item.status ? 'Disable' : 'Enable' }}
+                                </button>
+                            </td>
+                            <td>
+                                <p>{{ item.count }}</p>
+                            </td>
+                            <td>
+                                <button @click="deleteID(item.name)" class="delete is-small"></button>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+            </div>
+            <div class="card-footer">
+                <p class="card-footer-item is-size-7 has-text-link has-text-weight-semibold" @click="createID()"
+                    style="cursor: pointer;">Create
+                    ID</p>
+                <p class="card-footer-item is-size-7 has-text-link has-text-weight-semibold" @click="getIDs()"
+                    style="cursor: pointer;">Refresh</p>
+                <p class="card-footer-item is-size-7">{{idList.length}} IDs</p>
+                <p class="card-footer-item is-size-7">{{idList.filter(item => item.status === false).length}} IDs
+                    Disabled
+                </p>
+            </div>
+
+        </div>
+
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const idList = ref([]);
+                const del = ref(null)
+
+                onMounted(async () => {
+                    await getIDs();
+                });
+
+                async function getIDs() {
+                    const rawResponse = await fetch('/ids');
+                    const idsList = await rawResponse.json();
+                    idList.value = idsList;
+                }
+
+                async function toggleStatus(name) {
+                    try {
+                        const response = await fetch(`/status/${name}`, {
+                            method: 'GET'
+                        });
+                        if (response.ok) {
+                            await getIDs();
+                        }
+                    } catch (error) {
+                        console.error("Error toggling status:", error);
+                    }
+                }
+
+                async function deleteID(name) {
+                    try {
+                        const response = await fetch(`/id/${name}`, {
+                            method: "DELETE"
+                        });
+                        if (response.ok) {
+                            await getIDs();
+                        }
+                    } catch (error) {
+                        console.error("Error deleting ID:", error);
+                    }
+                }
+
+                async function createID() {
+                    try {
+                        const response = await fetch(`create`, { method: "PUT" });
+                        if (response.ok) {
+                            const res = await response.json();
+                            await getIDs();
+                        }
+                    } catch (error) {
+                        console.error("Error creating ID:", error);
+                    }
+                }
+
+                return {
+                    idList,
+                    getIDs,
+                    toggleStatus,
+                    deleteID,
+                    createID,
+                    del,
+                };
+            }
+        }).mount("#app");
+
+    </script>
+</body>
+
+</html>

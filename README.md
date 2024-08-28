@@ -9,6 +9,8 @@ AxisGTDSync is a sync server for [AxisGTD](https://github.com/magician333/AxisGT
 * [Golang](https://github.com/golang/go) **Ugly language**, but decent performance
 * [Fiber](https://github.com/gofiber/fiber) Good performance, simple and clear
 * [PostgreSQL](https://www.postgresql.org) A relatively stable SQL database for data security
+* [Vue](https://github.com/vuejs/) Management page usage
+* [Bulma](https://github.com/jgthms/bulma) Management page usage
 
 
 ## How to use(manual)
@@ -51,11 +53,11 @@ For example, your domain is [*www.sync.app*]
 > Open the browser and view [*www.sync.app*], If you see the following page, it means the service is running successfully
 
 
-![success](/img/success.png)
+![success](/img/management.png)
 
-> Open [*www.sync.app*]/create, you will get an ID
+> Click **Create ID**, you will get an ID, you can use this ID to sync AxisGTD Data
 
-![create](/img/create.png)
+> You can view the number of IDs in the database, or you can disable some of them. Disabled IDs will not be able to use the synchronization function. If you don't need this ID, you can click the delete button on the right to delete this ID (including all the data of this ID). The data is very important, please make sure before deleting it.
 
 > Open [*www.sync.app*]/api/docs, you can use openAPI docs (swagger) to test
 > 
@@ -69,14 +71,14 @@ For example, your domain is [*www.sync.app*]
 ## TodoList
 - [x] Use PostgreSQL
 - [x] Multi ID manage
-- [x] Front-end management data page
 - [x] Delete Data
 - [x] Delete ID
 - [x] ID status manage
 - [x] Swagger API Docs
 - [x] Docker deployment
 - [x] Code optimization
-- [ ] Front-end management ID page
+- [x] Front-end management data page(optimizating)
+
   
 ## Other
 You can use Firebase, Supabase, Neon and other Serverless databases to get a good experience.

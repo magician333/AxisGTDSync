@@ -2,7 +2,7 @@ package api
 
 import (
 	"database/sql"
-	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,10 +22,10 @@ func init() {
 // @Description	Checks if the AxisGTD synchronization service is running.
 // @Tags			index
 // @Produce		plain
-// @Success		200	{string}	string	"AxisGTD synchronization service has been run successfully!"
+// @Success		200	{string}	string "HTML template with service status"
 // @Router			/ [get]
 func Index(c *fiber.Ctx) error {
-	return c.SendString("AxisGTD synchronization service has been run successfully!")
+	return c.Render("index", fiber.Map{"Title": "AxisGTDSync Manage"})
 }
 
 // @Summary		Create a new UID and axisgtd table
@@ -35,14 +35,18 @@ func Index(c *fiber.Ctx) error {
 // @Produce		json
 // @Success		200	{string}	string	"Create ID successful! Your ID is {uidName}"
 // @Failure		500	{string}	string	"Internal server error"
-// @Router			/create [get]
+// @Router			/create [put]
 func CreateID(c *fiber.Ctx) error {
 	uidName, err := GetName()
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Create ID Failed"})
+	}
 
 	query := `INSERT INTO UID (name, status) VALUES ($1, $2)`
 	_, err = db.Exec(query, uidName, true)
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Create ID Failed"})
+	}
 
 	createDataTableQuery := `
 	CREATE TABLE IF NOT EXISTS axisgtd (
@@ -54,10 +58,11 @@ func CreateID(c *fiber.Ctx) error {
 	);`
 
 	_, err = db.Exec(createDataTableQuery)
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Create ID Failed"})
+	}
 
-	msg := fmt.Sprintf("Create ID successful! Your ID is %s", uidName)
-	return c.SendString(msg)
+	return c.Status(200).JSON(fiber.Map{"name": uidName})
 }
 
 // @Summary		Get AxisGTD records by UID name
@@ -86,7 +91,9 @@ func GetID(c *fiber.Ctx) error {
 	`
 
 	rows, err := db.Query(query, c.Params("name"))
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Get ID information Failed"})
+	}
 	defer rows.Close()
 
 	var dataList []AxisGTDJsonType
@@ -95,7 +102,9 @@ func GetID(c *fiber.Ctx) error {
 		var axisgtd AxisGTDType
 		var status bool
 		err := rows.Scan(&axisgtd.Todolist, &axisgtd.Config, &axisgtd.Time, &status)
-		checkerr(err)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"Error": "Get ID information Failed"})
+		}
 		if status {
 			dataList = append(dataList, AxisGTDJsonType{
 				Todolist: axisgtd.Todolist,
@@ -108,7 +117,6 @@ func GetID(c *fiber.Ctx) error {
 	if len(dataList) == 0 {
 		return c.Status(404).JSON(fiber.Map{"Error": "No records found"})
 	}
-
 	return c.JSON(dataList)
 }
 
@@ -123,8 +131,10 @@ func GetID(c *fiber.Ctx) error {
 // @Router			/id/{name} [delete]
 func DeleteID(c *fiber.Ctx) error {
 	err := DeleteUIDAndAxisGtdByUID(c.Params("name"))
-	checkerr(err)
-	return c.Status(200).JSON(fiber.Map{"Success": "UID and associated records deleted successfully"})
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Delete ID Error"})
+	}
+	return c.Status(200).JSON(fiber.Map{"Success": "ID and associated records deleted successfully"})
 }
 
 // @Summary		Get counts of axisgtd per UID
@@ -138,6 +148,7 @@ func DeleteID(c *fiber.Ctx) error {
 func GetAllID(c *fiber.Ctx) error {
 	query := `
 		SELECT
+			UID.id,
 			UID.name,
 			UID.status,
 			COUNT(axisgtd.uid_name) AS axisgtd_count
@@ -145,19 +156,25 @@ func GetAllID(c *fiber.Ctx) error {
 			UID
 		LEFT JOIN axisgtd ON UID.name = axisgtd.uid_name
 		GROUP BY
-			UID.name, UID.status`
+			UID.id,UID.name, UID.status`
 	rows, err := db.Query(query)
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Get ID list Failed"})
+	}
 	defer rows.Close()
 
 	var ids []IDSType
 	for rows.Next() {
 		var preID IDSType
-		err := rows.Scan(&preID.Name, &preID.Status, &preID.Count)
-		checkerr(err)
+		err := rows.Scan(&preID.Id, &preID.Name, &preID.Status, &preID.Count)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"Error": "Get ID list Failed"})
+		}
 		ids = append(ids, preID)
 	}
-
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Id < ids[j].Id
+	})
 	return c.JSON(ids)
 }
 
@@ -183,7 +200,9 @@ func ToggleStatus(c *fiber.Ctx) error {
 
 	updateQuery := `UPDATE UID SET status = $1 WHERE name = $2`
 	_, err = db.Exec(updateQuery, uid.Status, c.Params("name"))
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Change Status Failed"})
+	}
 	return c.JSON(fiber.Map{"message": "Status toggled", "new_status": uid.Status})
 }
 
@@ -214,7 +233,9 @@ func SyncGet(c *fiber.Ctx) error {
 			time DESC
 		LIMIT 1;`
 	rows, err := db.Query(query, c.Params("name"))
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Get sync data Failed"})
+	}
 	defer rows.Close()
 	for rows.Next() {
 		var axisgtd AxisGTDType
@@ -225,7 +246,9 @@ func SyncGet(c *fiber.Ctx) error {
 			&axisgtd.UIDName,
 			&uid.Name,
 			&uid.Status)
-		checkerr(err)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"Error": "Get sync data Failed"})
+		}
 		if uid.Status {
 			data := AxisGTDJsonType{
 				Todolist: axisgtd.Todolist,
@@ -259,15 +282,19 @@ func SyncPost(c *fiber.Ctx) error {
 	var exists bool
 	existsQuery := `SELECT EXISTS(SELECT 1 FROM UID WHERE name = $1)`
 	err := db.QueryRow(existsQuery, c.Params("name")).Scan(&exists)
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Post sync data Failed"})
+	}
 	if !exists {
 		return c.Status(404).JSON(fiber.Map{"Error": c.Params("name") + " not found"})
 	}
 
 	var status bool
 	statusQuery := `SELECT status FROM uid WHERE name=$1`
-	statusErr := db.QueryRow(statusQuery, c.Params("name")).Scan(&status)
-	checkerr(statusErr)
+	err = db.QueryRow(statusQuery, c.Params("name")).Scan(&status)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Post sync data Failed"})
+	}
 	if !status {
 		return c.Status(404).JSON(fiber.Map{"Error": c.Params("name") + " is disabled"})
 	}
@@ -279,7 +306,9 @@ func SyncPost(c *fiber.Ctx) error {
 
 	query := `INSERT INTO axisgtd (todolist,config,time,uid_name) VALUES ($1,$2,$3,$4)`
 	_, err = db.Exec(query, todo_data.Todolist, todo_data.Config, todo_data.Time, c.Params("name"))
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Post sync data Failed"})
+	}
 
 	return c.SendStatus(200)
 }
@@ -297,7 +326,9 @@ func SyncPost(c *fiber.Ctx) error {
 // @Router			/delete/{name}/{time} [delete]
 func DeleteRecord(c *fiber.Ctx) error {
 	timeVal, err := strconv.ParseInt(c.Params("time"), 10, 64)
-	checkerr(err)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "Delete Record Failed"})
+	}
 	err = DeleteDBRecord(c.Params("name"), timeVal)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"Error": "Record not found"})

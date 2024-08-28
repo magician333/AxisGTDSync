@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/template/html/v2"
 )
 
 //	@title			AxisGTD Sync API
@@ -35,16 +36,21 @@ func main() {
 	corsUrl := api.GetConfig().CorsURL
 
 	api.InitDB()
+	engine := html.New("./views", ".html")
+	engine.Delims("{[", "]}")
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{Views: engine})
+
+	app.Static("/", "./public")
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: corsUrl,
 		AllowHeaders: "Origin,Content-Type,Accept",
 	}))
+
 	app.Get("/", api.Index)
 
-	app.Get("/create", api.CreateID)
+	app.Put("/create", api.CreateID)
 
 	app.Get("/id/:name", api.GetID)
 

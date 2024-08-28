@@ -35,7 +35,7 @@ const docTemplate = `{
                 "summary": "Check service status",
                 "responses": {
                     "200": {
-                        "description": "AxisGTD synchronization service has been run successfully!",
+                        "description": "HTML template with service status",
                         "schema": {
                             "type": "string"
                         }
@@ -44,7 +44,7 @@ const docTemplate = `{
             }
         },
         "/create": {
-            "get": {
+            "put": {
                 "description": "Creates a new UID with a generated name and sets up the axisgtd table.",
                 "consumes": [
                     "application/json"
@@ -426,6 +426,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "count": {
+                    "type": "integer"
+                },
+                "id": {
                     "type": "integer"
                 },
                 "name": {

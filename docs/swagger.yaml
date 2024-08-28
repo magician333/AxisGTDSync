@@ -28,6 +28,8 @@ definitions:
     properties:
       count:
         type: integer
+      id:
+        type: integer
       name:
         type: string
       status:
@@ -53,14 +55,14 @@ paths:
       - text/plain
       responses:
         "200":
-          description: AxisGTD synchronization service has been run successfully!
+          description: HTML template with service status
           schema:
             type: string
       summary: Check service status
       tags:
       - index
   /create:
-    get:
+    put:
       consumes:
       - application/json
       description: Creates a new UID with a generated name and sets up the axisgtd
